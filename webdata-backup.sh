@@ -6,12 +6,9 @@
 
 # Modify config variables
 email='me@email.com'
-mysql_user='root'
-mysql_password='password'
-mysql_table='table'
-mysql_host='localhost'
+webdata_directory='/var/www/html/wp-content'
 remote='remote'
-remotedest='/rclone/database'
+remotedest='/rclone/webdata'
 # Do not modify from this point
 
 # Set date
@@ -20,13 +17,13 @@ humantoday=`date +"%d/%m/%y %X"`
 month=`date +%m`
 
 # Change dir to rclone sync directory
-cd /rclone/database
+cd /rclone/webdata
 
-# Mysql dump database table to bz2 file
-mysqldump -u ${mysql_user} -p${mysql_password} -h ${mysql_host} ${mysql_table} | bzip2 > ${mysql_table}.${today}.sql.bz2
+# Tarball web data directory into /rclone/webdata
+tar -jcvf webdata.${today}.tar.bz2 ${webdata_directory}
 
 # Rclone sync directory to remote
-rclone copy /rclone/database ${remote}:${remotedest}/${month}
+rclone copy /rclone/webdata ${remote}:${remotedest}/${month}
 
 # Checking Rclone success or failure, sends email
 if [[ $? -gt 0 ]]; 
@@ -40,8 +37,8 @@ else
     echo -e "Subject:${subject}\n${body}" | sendmail -t "${email}"
 fi
 
-# Delete backup file from 12 hours ago.
-# Rclone copy was used so deleting backups older than 11 hours 59 mins is safe to do on the server.
+# Delete the last backup from the server.
+# Rclone copy was used so deleting the last backup is safe to do on the server.
 # All previous files should have successfully uploaded to your remote.
 # Any failures will have resulted in an email being sent to you. 
-find /rclone/database/ -type f -name '*.bz2' -cmin +719 -exec rm {} \;
+find /rclone/database/ -type f -name '*.bz2.gz' -cmin +120 -exec rm {} \;
