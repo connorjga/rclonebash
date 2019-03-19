@@ -27,6 +27,7 @@ mysqldump -u ${mysql_user} -p${mysql_password} -h ${mysql_host} ${mysql_table} |
 
 # Rclone sync directory to remote
 rclone copy /rclone/database ${remote}:${remotedest}/${month}
+echo exit code = $?
 
 # Checking Rclone success or failure, sends email
 if [[ $? -gt 0 ]]; 
